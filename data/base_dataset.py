@@ -117,10 +117,10 @@ def get_img_params(opt, size):
 
         crop_w, crop_h = make_power_2(crop_w), make_power_2(crop_h)        
         x_span = (new_w - crop_w) // 2
-        crop_x = np.maximum(0, np.minimum(x_span*2, int(np.random.randn() * x_span/3 + x_span)))        
-        crop_y = random.randint(0, np.minimum(np.maximum(0, new_h - crop_h), new_h // 8))
-        #crop_x = random.randint(0, np.maximum(0, new_w - crop_w))
-        #crop_y = random.randint(0, np.maximum(0, new_h - crop_h))        
+        #crop_x = np.maximum(0, np.minimum(x_span*2, int(np.random.randn() * x_span/3 + x_span)))        
+        #crop_y = random.randint(0, np.minimum(np.maximum(0, new_h - crop_h), new_h // 8))
+        crop_x = random.randint(0, np.maximum(0, new_w - crop_w))
+        crop_y = random.randint(0, np.maximum(0, new_h - crop_h))        
     else:
         new_w, new_h = make_power_2(new_w), make_power_2(new_h)
 

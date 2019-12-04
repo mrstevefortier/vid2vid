@@ -116,7 +116,7 @@ class Inference(object):
         self.height = 0
 
     def createNewData(self, depth, width, height, json):
-        size = # Create size from width/height
+        size = (width, height)
         params = get_img_params(self.opt, size)
         Ai = get_image(json, size, params, input_type='openpose')
         Bi = get_image(json, size, params, input_type='img')
@@ -133,36 +133,37 @@ class Inference(object):
             self.width = width
             self.height = height
 
-        # Read json
-        json = "" # req.something
+        json = req.bounded_stream.read()
 
         newData = createNewData(self.dataset, opt.n_frames_G, width, height, json)
         self.dataset.append(newData)
         if (len(self.dataset) > opt.n_frames_G)
             self.dataset = self.dataset[opt.n_frames_G:]
 
-        if len(self.dataset) == opt.n_frames_G:
-            dataA = self.dataset[0].Ai
-            dataB = self.dataset[0].Bi
-            for i in [1, len(self.dataset)]:
-                dataA = concat_frame(dataA, self.dataset[i].Ai, opt.n_frames_G:)
-                dataB = concat_frame(dataB, self.dataset[i].Bi, opt.n_frames_G:)
+        # Duplicate the first frame if we don't have the minimum amount of frames yet. (That should happen for the first frame only)
+        while (len(self.dataset) < opt.n_frames_G)
+            self.dataset.append(newData)
 
-            A = Variable(dataA).view(1, -1, self.input_nc, height, width)
-            B = Variable(dataB).view(1, -1, opt.output_nc, height, width) if len(dataB.size()) > 2 else None
-            inst = Variable(data['inst']).view(1, -1, 1, height, width) if len(data['inst'].size()) > 2 else None
-            generated = self.model.inference(A, B, inst)
-                
-            image = util.tensor2im(generated[0].data[0])
-            resp.body = image #pngFile.read()
-            resp.content_type = falcon.MEDIA_PNG
-            resp.status = falcon.HTTP_200
 
-        else:
-            image = 0 # empty image
-            resp.body = image #pngFile.read()
-            resp.content_type = falcon.MEDIA_PNG
-            resp.status = falcon.HTTP_200                        
+        dataA = self.dataset[0].Ai
+        dataB = self.dataset[0].Bi
+        for i in [1, len(self.dataset)]:
+            dataA = concat_frame(dataA, self.dataset[i].Ai, opt.n_frames_G:)
+            dataB = concat_frame(dataB, self.dataset[i].Bi, opt.n_frames_G:)
+
+        A = Variable(dataA).view(1, -1, self.input_nc, height, width)
+        B = Variable(dataB).view(1, -1, opt.output_nc, height, width) if len(dataB.size()) > 2 else None
+
+        # What to do with this?
+        inst = Variable(data['inst']).view(1, -1, 1, height, width) if len(data['inst'].size()) > 2 else None
+        
+        generated = self.model.inference(A, B, inst)
+            
+        image = util.tensor2im(generated[0].data[0])
+        resp.body = image #pngFile.read()
+        resp.content_type = falcon.MEDIA_PNG
+        resp.status = falcon.HTTP_200
+
 
         
 class Server:
@@ -170,7 +171,6 @@ class Server:
         self.port = port
 
     def serve(self):
-        ## Real thing to call
         app = falcon.API()
         app.req_options.auto_parse_form_urlencoded=True
 

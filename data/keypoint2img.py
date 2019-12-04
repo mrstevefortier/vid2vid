@@ -68,7 +68,12 @@ def interpPoints(x, y):
 
 def read_keypoints(json_input, size, random_drop_prob=0, remove_face_labels=False, basic_point_only=False):
     with open(json_input, encoding='utf-8') as f:
-        keypoint_dicts = json.loads(f.read())["people"]
+        text = f.read()
+
+    return read_keypoints_from_text(text, size, random_drop_prob, remove_face_labels, basic_point_only)
+
+def read_keypoints_from_text(json_text, size, random_drop_prob=0, remove_face_labels=False, basic_point_only=False):
+    keypoint_dicts = json.loads(json_text)["people"]
 
     edge_lists = define_edge_lists(basic_point_only)
     w, h = size    

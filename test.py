@@ -29,8 +29,6 @@ input_nc = 1 if opt.label_nc != 0 else opt.input_nc
 save_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
 print('Doing %d frames' % len(dataset))
 for i, data in enumerate(dataset):
-    if i >= opt.how_many:
-        break    
     if data['change_seq']:
         model.fake_B_prev = None
 

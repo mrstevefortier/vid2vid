@@ -14,7 +14,6 @@ from util import html
 
 import falcon
 import png
-#from . import Model
 from wsgiref import simple_server
 
 opt = ServeOptions().parse(save=False)
@@ -26,18 +25,13 @@ if opt.dataset_mode == 'temporal':
     opt.dataset_mode = 'test'
 
 class Inference(object):
-    def __init__(self, modelsRootPath):
-        self.inferenceModels = {}
-        self.modelsRootPath = modelsRootPath
-
-    def getOrInitializeInferenceModel(self, modelName, entityId):
-        # Instanciate model
-        model = Model.Model(os.path.join(self.modelsRootPath, modelName))
-
-        servicePath = os.path.join(model.path, "service", entityId)
-        #model.kickstartInference(servicePath)
-        
-        return model
+    def __init__(self):
+        self.data_loader = CreateDataLoader(opt)
+        self.dataset = data_loader.load_data()
+        self.model = create_model(opt)
+        self.visualizer = Visualizer(opt)
+        self.input_nc = 1 if opt.label_nc != 0 else opt.input_nc
+        self.save_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
 
     def on_get(self, req, resp):
         imagePath = "/home/stevefortier/Desktop/WEvrDg.png" #model.infer(json, size)
@@ -47,7 +41,7 @@ class Inference(object):
         sizeStringArray = sizeString.split(',')
         size = (int(sizeStringArray[0]), int(sizeStringArray[1]))
         
-        model = self.getOrInitializeInferenceModel(modelName, entityId)
+        # append new sample
 
 
 
@@ -79,11 +73,7 @@ class Inference(object):
             self.visualizer.save_images(save_dir, visuals, img_path)
 
 
-
-
-
         json = "" # req.something
-        #png.load
 
         resp.content_type = falcon.MEDIA_PNG
         resp.status = falcon.HTTP_200
@@ -91,24 +81,15 @@ class Inference(object):
             resp.body = pngFile.read()
         
 class Server:
-    def __init__(self, modelsRootPath, port):
-        self.modelsRootPath = modelsRootPath
+    def __init__(self, port):
         self.port = port
-
-        self.data_loader = CreateDataLoader(opt)
-        self.dataset = data_loader.load_data()
-        self.model = create_model(opt)
-        self.visualizer = Visualizer(opt)
-        self.input_nc = 1 if opt.label_nc != 0 else opt.input_nc
-
-        self.save_dir = os.path.join(opt.results_dir, opt.name, '%s_%s' % (opt.phase, opt.which_epoch))
 
     def serve(self):
         ## Real thing to call
         app = falcon.API()
         app.req_options.auto_parse_form_urlencoded=True
 
-        inference = Inference(self.modelsRootPath)
+        inference = Inference()
         app.add_route('/infer', inference)
 
         print("Serving on port {}".format(self.port))
